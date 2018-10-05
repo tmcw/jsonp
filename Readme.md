@@ -1,3 +1,9 @@
+This fork is a mild modernization of the original. It:
+
+- Drops bower and component support
+- Adds ES6 & UMD support
+- Removes debug dependency
+- Is installable as `@tmcw/jsonp`
 
 # jsonp
 
@@ -11,18 +17,6 @@ Install for node.js or browserify using `npm`:
 
 ``` bash
 $ npm install jsonp
-```
-
-Install for component(1) using `component`:
-
-``` bash
-$ component install LearnBoost/jsonp
-```
-
-Install for browser using `bower`:
-
-``` bash
-$ bower install jsonp
 ```
 
 ## API

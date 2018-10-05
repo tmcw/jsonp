@@ -2,13 +2,9 @@
  * Module dependencies
  */
 
-var debug = require('debug')('jsonp');
-
 /**
  * Module exports.
  */
-
-module.exports = jsonp;
 
 /**
  * Callback index.
@@ -20,7 +16,7 @@ var count = 0;
  * Noop function.
  */
 
-function noop(){}
+function noop() {}
 
 /**
  * JSONP handler
@@ -36,62 +32,54 @@ function noop(){}
  * @param {Function} optional callback
  */
 
-function jsonp(url, opts, fn){
-  if ('function' == typeof opts) {
-    fn = opts;
-    opts = {};
-  }
-  if (!opts) opts = {};
-
-  var prefix = opts.prefix || '__jp';
+export default function jsonp(url, opts = {}) {
+  const prefix = opts.prefix || "__jp";
 
   // use the callback name that was passed if one was provided.
   // otherwise generate a unique name by incrementing our counter.
-  var id = opts.name || (prefix + (count++));
+  let id = opts.name || prefix + count++;
 
-  var param = opts.param || 'callback';
-  var timeout = null != opts.timeout ? opts.timeout : 60000;
-  var enc = encodeURIComponent;
-  var target = document.getElementsByTagName('script')[0] || document.head;
-  var script;
-  var timer;
+  var param = opts.param || "callback";
+  const timeout = null != opts.timeout ? opts.timeout : 60000;
+  const target = document.getElementsByTagName("script")[0] || document.head;
+  let script;
+  let timer;
 
-
-  if (timeout) {
-    timer = setTimeout(function(){
-      cleanup();
-      if (fn) fn(new Error('Timeout'));
-    }, timeout);
-  }
-
-  function cleanup(){
-    if (script.parentNode) script.parentNode.removeChild(script);
-    window[id] = noop;
-    if (timer) clearTimeout(timer);
-  }
-
-  function cancel(){
-    if (window[id]) {
-      cleanup();
+  return new Promise((resolve, reject) => {
+    if (timeout) {
+      timer = setTimeout(function() {
+        cleanup();
+        reject(new Error("Timeout"));
+      }, timeout);
     }
-  }
 
-  window[id] = function(data){
-    debug('jsonp got', data);
-    cleanup();
-    if (fn) fn(null, data);
-  };
+    function cleanup() {
+      if (script.parentNode) script.parentNode.removeChild(script);
+      window[id] = noop;
+      if (timer) clearTimeout(timer);
+    }
 
-  // add qs component
-  url += (~url.indexOf('?') ? '&' : '?') + param + '=' + enc(id);
-  url = url.replace('?&', '?');
+    function cancel() {
+      if (window[id]) {
+        cleanup();
+      }
+    }
 
-  debug('jsonp req "%s"', url);
+    window[id] = function(data) {
+      cleanup();
+      resolve(data);
+    };
 
-  // create script
-  script = document.createElement('script');
-  script.src = url;
-  target.parentNode.insertBefore(script, target);
+    // add qs component
+    url +=
+      (~url.indexOf("?") ? "&" : "?") + param + "=" + encodeURIComponent(id);
+    url = url.replace("?&", "?");
 
-  return cancel;
+    // create script
+    script = document.createElement("script");
+    script.src = url;
+    target.parentNode.insertBefore(script, target);
+
+    return cancel;
+  });
 }
